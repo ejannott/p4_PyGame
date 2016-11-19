@@ -247,7 +247,7 @@ while running:
 			all_sprites.update()
 
 
-	healthbar(playerhealth)
+	healthbar(playerhealth) 
 
 	#Have the background repeat itself 
 	screen.fill(BLACK)
