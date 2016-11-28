@@ -32,6 +32,13 @@ GREEN = (50,205,50)
 BLUE = (0,0,255)
 LIGHTBLUE = (30,144,255)
 
+fontName = pygame.font.match_font('arial')
+def draw_text(surface, text, size, x, y):
+	font = pygame.font.Font(fontName, size)
+	text_surface = font.render(text, True, WHITE) #True means that the font is aliased
+	text_rect = text_surface.get_rect()
+	text_rect = righttop = (x,y)
+	surface.blit(text_surface, text_rect)
 
 # --- Classes
 
@@ -51,7 +58,7 @@ class Player(pygame.sprite.Sprite):
 		screen = pygame.display.get_surface()
 
 		self.area = screen.get_rect()
-		self.speed = 10
+		self.speed = 12
 		self.state = 'still'
 		self.reinit()
 
@@ -98,7 +105,7 @@ class Laser(pygame.sprite.Sprite):
 
 	def update(self):
 		### Move the laser ###
-		self.rect.x += 15
+		self.rect.x += 25
 
 
 
@@ -116,19 +123,19 @@ class Enemy(pygame.sprite.Sprite):
 
 		self.rect.y = random.randrange(0, screenHeight - self.rect.height)
 		self.rect.x = random.randrange(1140,1200)
-		self.speedx = random.randrange(1,8)
+		self.speedx = random.randrange(5,10)
 
 	def update(self):
 		self.rect.x -= self.speedx
 		if self.rect.right < 0:
 			self.rect.y = random.randrange(0, screenWidth - self.rect.height)
-			self.rect.x = random.randrange(1140,1200)
-			self.speedx = random.randrange(1,8)
+			self.rect.x = random.randrange(1100,1140)
+			self.speedx = random.randrange(5,10)
 
 
 
 screenWidth = 1100
-screenHeight = 572
+screenHeight = 550
 
 #Set up the game screen
 screen = pygame.display.set_mode((screenWidth,screenHeight))  #(double parentheses to let py know we are passing a tuple as a parameter)
@@ -226,8 +233,12 @@ while running:
 			print(score)
 
 			newEnemy = Enemy()
+			levelupEnemy = Enemy()
 			all_sprites.add(newEnemy)
 			enemy_list.add(newEnemy)
+			if score % 5 == 0:
+				all_sprites.add(levelupEnemy)
+				enemy_list.add(levelupEnemy)
 
 		#Remove laser is if flies off the screen
 		if laser.rect.y < -10:
@@ -242,8 +253,8 @@ while running:
 	screen.fill(BLACK)
 	screen.blit(backDrop1, (backDrop1_x,0))
 	screen.blit(backDrop2, (backDrop2_x,0))
-	screen.blit(backGround1, (backGround1_x,40))
-	screen.blit(backGround2, (backGround2_x,40))
+	screen.blit(backGround1, (backGround1_x,60))
+	screen.blit(backGround2, (backGround2_x,60))
 
 	if backDrop2_x <= -backDrop2.get_width():
 		backDrop2_x = backDrop2.get_width()
@@ -264,6 +275,7 @@ while running:
 	if playerDeath:
 		running = False
 
+	draw_text(screen, str(score), 24, 10, 20)
 
 	all_sprites.draw(screen)
 
