@@ -24,3 +24,16 @@ collision = False #when you start the game, you havent crashed yet
 
 #where the game is actaully running - in this loop:
 while not collision:
+	for event in pygame.event.get():  #pygame.event.get() tracks any event that happens - clicks, keys pressed, etc. per frame per second
+		if event.type == pygame.QUIT:
+			crashed = True
+
+		print (event)  #this will print every 'event' that pygame is tracking
+	pygame.display.update()
+
+	#define frames per second
+	clock.tick(35) #the number is the frames per second - RUNS THROUGH THE LOOP THIS QUICKLY
+
+#uninitiate pygame
+pygame.quit()
+quit()
