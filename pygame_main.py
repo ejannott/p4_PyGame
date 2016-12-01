@@ -28,29 +28,34 @@ GREEN = (50,205,50)
 BLUE = (0,0,255)
 LIGHTBLUE = (30,144,255)
 
-screenWidth = 600
-screenHeight = 800
+screenWidth = 1100
+screenHeight = 532
 
 #Set up the game screen
 screen = pygame.display.set_mode((screenWidth,screenHeight))  #(double parentheses to let py know we are passing a tuple as a parameter)
-pygame.display.set_caption('Dodging') #here is the TITLE of the window/game title
+pygame.display.set_caption('Dogfight') #here is the TITLE of the window/game title
 clock = pygame.time.Clock() #this is the 'gameclock' - this is imposed on everything in the game
 
 
-backGround = pygame.image.load('classroom.bmp')
-backGround = pygame.transform.scale(backGround, (screenWidth, screenHeight))
+backGround = pygame.image.load('skylineBG.bmp')
 
 initialSound = pygame.mixer.Sound("sounds/bubbles.wav")
 initialSound.play()
 
 
 #set up the player
-playerImg = pygame.image.load('spriteImages/blueDot.bmp')
+playerImg = pygame.image.load('spriteImages/playerShip.bmp')
+playerImg = pygame.transform.scale(playerImg, (75,75))
+playerImg = pygame.transform.rotate(playerImg, 270)
+
 def player(x,y):
 	screen.blit(playerImg,(x,y))   #blit draws backGround things
 
-x = (screenWidth * 0.5)
-y = (screenHeight * 0.8)
+x = 50
+y = (screenHeight * 0.5)
+
+x_change = 0
+y_change = 0
 
 running = True #when you start the game, you havent crashed yet
 
@@ -59,11 +64,29 @@ while running:
 	for event in pygame.event.get():  #pygame.event.get() tracks any event that happens - clicks, keys pressed, etc. per frame per second
 		if event.type == pygame.QUIT:
 			running = False
+		if event.type == pygame.KEYDOWN:
+			if event.key == pygame.K_LEFT:
+				x_change = -10
+			elif event.key == pygame.K_RIGHT:
+				x_change = 10
+			elif event.key == pygame.K_UP:
+				y_change = -10
+			elif event.key == pygame.K_DOWN:
+				y_change = 10
+		if event.type == pygame.KEYUP:
+			if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+				x_change = 0
+			elif event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+				y_change = 0
+
+	x += x_change
+	y += y_change
+
 
 #		print (event)  #this will print every 'event' that pygame is tracking
-	screen.fill(WHITE)
+	screen.fill(BLACK)
 	screen.blit(backGround, (0,0))
-#	player(x,y)
+	player(x,y)
 
 	pygame.display.update()
 
