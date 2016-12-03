@@ -39,12 +39,13 @@ class Player(pygame.sprite.Sprite):
 	### Class that represents the player ###
 	def __init__(self):
 		pygame.sprite.Sprite.__init__(self)
-		self.image = pygame.image.load('spriteImages/rocket.png').convert()
+		self.image = pygame.image.load('spriteImages/playerShip.bmp').convert()
 		self.image = pygame.transform.scale(self.image, (60,60))
 		self.image = pygame.transform.rotate(self.image, 270)
 		self.transColor = self.image.get_at((0,0))
 		self.image.set_colorkey(self.transColor)
 		self.rect = self.image.get_rect()
+		self.radius = 20
 
 		# IDK what this line does
 		screen = pygame.display.get_surface()
@@ -81,6 +82,8 @@ class Player(pygame.sprite.Sprite):
 		self.movepos[0] = self.movepos[0] + (self.speed)
 		self.state = 'movedown'
 
+
+
 class Laser(pygame.sprite.Sprite):
 	### This class represents the laser shots ###
 	def __init__(self):
@@ -97,12 +100,31 @@ class Laser(pygame.sprite.Sprite):
 		### Move the laser ###
 		self.rect.x += 15
 
-# class Enemy(pygame.sprite.Sprite):
-# 	### This class represents the enemys that come on screen ###
 
-# 	def __init__ (self):
-# 		### Constructor, creates the image of the enemy ###
-# 		super
+
+class Enemy(pygame.sprite.Sprite):
+	### This class represents the enemys that come on screen ###
+	def __init__ (self):
+		### Constructor, creates the image of the enemy ###
+		pygame.sprite.Sprite.__init__(self)
+		self.image = pygame.image.load('spriteImages/blueAlien.png').convert()
+		self.image = pygame.transform.scale(self.image, (55,65))
+		self.transColor = self.image.get_at((0,0))
+		self.image.set_colorkey(self.transColor)
+		self.rect = self.image.get_rect()
+		self.radius = 23
+
+		self.rect.y = random.randrange(0, screenHeight - self.rect.height)
+		self.rect.x = random.randrange(1140,1200)
+		self.speedx = random.randrange(1,8)
+
+	def update(self):
+		self.rect.x -= self.speedx
+		if self.rect.right < 0:
+			self.rect.y = random.randrange(0, screenWidth - self.rect.height)
+			self.rect.x = random.randrange(1140,1200)
+			self.speedx = random.randrange(1,8)
+
 
 
 screenWidth = 1100
@@ -115,30 +137,50 @@ clock = pygame.time.Clock() #this is the 'gameclock' - this is imposed on everyt
 
 backGround1 = pygame.image.load('skylineBG.bmp')
 backGround2 = pygame.image.load('skylineBG.bmp')
+backDrop1 = pygame.image.load('starsky.bmp')
+backDrop2 = pygame.image.load('starsky.bmp')
+
 backGround1_x = 0
 backGround2_x = backGround1.get_width()
+backDrop1_x = 0
+backDrop2_x = backDrop1.get_width()
 
+pygame.mixer.music.load("sounds/battleMusic.wav")
+pygame.mixer.music.play(-1,0.0)
 laserSound = pygame.mixer.Sound("sounds/laserSound.wav")
 
 player1 = Player()
 
 #List of all the Sprites
 all_sprites = pygame.sprite.Group(player1)
-
 #List of all of the Enemies
 enemy_list = pygame.sprite.Group()
-
 #List of all of the laser shots
 laser_list = pygame.sprite.Group()
 
+for i in range(10):
+	enemy = Enemy()
+	all_sprites.add(enemy)
+	enemy_list.add(enemy)
+
 score = 0
 
+def healthbar(playerhealth):
+	if playerhealth > 35:
+		playerhealth_color = GREEN
+	else:
+		playerhealth_color = RED
+	pygame.draw.rect(screen, playerhealth_color, (680, 25, playerhealth, 25))
 
 
 # - - - - - - - Main Program - - - - - - - #
 
 running = True #when you start the game, you havent crashed yet
 while running:
+
+	playerhealth = 100
+
+
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
 			running = False
@@ -183,16 +225,32 @@ while running:
 			score += 1
 			print(score)
 
+			newEnemy = Enemy()
+			all_sprites.add(newEnemy)
+			enemy_list.add(newEnemy)
+
 		#Remove laser is if flies off the screen
 		if laser.rect.y < -10:
 			laser_list.remove(laser)
 			all_sprites.remove(laser)
+			all_sprites.update()
 
+
+	healthbar(playerhealth)
 
 	#Have the background repeat itself 
 	screen.fill(BLACK)
+	screen.blit(backDrop1, (backDrop1_x,0))
+	screen.blit(backDrop2, (backDrop2_x,0))
 	screen.blit(backGround1, (backGround1_x,40))
 	screen.blit(backGround2, (backGround2_x,40))
+
+	if backDrop2_x <= -backDrop2.get_width():
+		backDrop2_x = backDrop2.get_width()
+	if backDrop1_x <= -backDrop1.get_width():
+		backDrop1_x = backDrop1.get_width()
+	backDrop1_x -= 5
+	backDrop2_x -= 5
 
 	if backGround2_x <= -backGround2.get_width() + 7:
 		backGround2_x = backGround2.get_width()
@@ -202,6 +260,11 @@ while running:
 	backGround2_x -= 10
 
 	all_sprites.update()
+	playerDeath = pygame.sprite.spritecollide(player1, enemy_list, True, pygame.sprite.collide_circle)
+	if playerDeath:
+		running = False
+
+
 	all_sprites.draw(screen)
 
 	pygame.display.update()
