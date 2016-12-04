@@ -2,16 +2,12 @@
 #ejannott
 #22235024
 #
-#PERSONAL TO-DO:
-#	- Get rid of explanation comments - save my final version as a different copy without those.
-#	- FIGURE OUT SCROLLING WALLPAPER - the repeat
-#	- 
 #
-##References:
-## 
-## 
-## 
-## 
+# . . . S T I L L
+#                A 
+#                  W O R K
+#                         I N
+#                            P R O G R E S S . . .
 
 import sys
 import pygame
@@ -32,13 +28,26 @@ GREEN = (50,205,50)
 BLUE = (0,0,255)
 LIGHTBLUE = (30,144,255)
 
+
 fontName = pygame.font.match_font('arial')
 def draw_text(surface, text, size, x, y):
 	font = pygame.font.Font(fontName, size)
-	text_surface = font.render(text, True, WHITE) #True means that the font is aliased
+	text_surface = font.render(text, True, GREEN) #True means that the font is aliased
 	text_rect = text_surface.get_rect()
 	text_rect = righttop = (x,y)
 	surface.blit(text_surface, text_rect)
+
+def draw_health_bar(surface, x, y, percent):
+	if percent < 0:
+		percent = 0
+	BAR_LENGTH = 100
+	BAR_HEIGHT = 10
+	fill = (percent/100) * BAR_LENGTH
+	outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+	fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+	pygame.draw.rect(surface, GREEN, fill_rect)
+	pygame.draw.rect(surface, WHITE, outline_rect, 2)
+
 
 # --- Classes
 
@@ -47,12 +56,14 @@ class Player(pygame.sprite.Sprite):
 	def __init__(self):
 		pygame.sprite.Sprite.__init__(self)
 		self.image = pygame.image.load('spriteImages/playerShip.bmp').convert()
-		self.image = pygame.transform.scale(self.image, (60,60))
+		self.image = pygame.transform.scale(self.image, (80,80))
 		self.image = pygame.transform.rotate(self.image, 270)
 		self.transColor = self.image.get_at((0,0))
 		self.image.set_colorkey(self.transColor)
 		self.rect = self.image.get_rect()
-		self.radius = 20
+		self.radius = 33
+
+		self.health = 100
 
 		# IDK what this line does
 		screen = pygame.display.get_surface()
@@ -123,15 +134,40 @@ class Enemy(pygame.sprite.Sprite):
 
 		self.rect.y = random.randrange(0, screenHeight - self.rect.height)
 		self.rect.x = random.randrange(1140,1200)
-		self.speedx = random.randrange(5,10)
+		self.speedx = random.randrange(5,15)
 
 	def update(self):
 		self.rect.x -= self.speedx
 		if self.rect.right < 0:
 			self.rect.y = random.randrange(0, screenWidth - self.rect.height)
 			self.rect.x = random.randrange(1100,1140)
-			self.speedx = random.randrange(5,10)
+			self.speedx = random.randrange(5,15)
 
+
+
+class Explosion(pygame.sprite.Sprite):
+	def __init__ (self, center, size):
+		pygame.sprite.Sprite.__init__(self)
+		self.size = size
+		self.image = explosion_animation[self.size][0]
+		self.rect = self.image.get_rect()
+		self.rect.center = center
+		self.frame = 0
+		self.last_update = pygame.time.get_ticks()
+		self.frame_rate = 50
+
+	def update(self):
+		now = pygame.time.get_ticks()
+		if now - self.last_update > self.frame_rate:
+			self.last_update = now
+			self.frame += 1
+			if self.frame == len(explosion_animation[self.size]):
+				self.kill()
+			else:
+				center = self.rect.center
+				self.image = explosion_animation[self.size][self.frame]
+				self.rect = self.image.get_rect()
+				self.rect.center = center
 
 
 screenWidth = 1100
@@ -155,11 +191,26 @@ backDrop2_x = backDrop1.get_width()
 pygame.mixer.music.load("sounds/battleMusic.wav")
 pygame.mixer.music.play(-1,0.0)
 laserSound = pygame.mixer.Sound("sounds/laserSound.wav")
+explosionSound = pygame.mixer.Sound("sounds/explosion.wav")
 
-player1 = Player()
+
+player = Player()
+
+explosion_animation = {}
+explosion_animation['large'] = []
+explosion_animation['small'] = [] #dictionary - name instead of a number
+for i in range(9):
+	filename = 'spriteImages/regularExplosion0{}.png'.format(i)
+	img = pygame.image.load(filename).convert()
+	img.set_colorkey(BLACK)#####
+	img_large = pygame.transform.scale(img,(75,75))
+	explosion_animation['large'].append(img_large)
+
+
+
 
 #List of all the Sprites
-all_sprites = pygame.sprite.Group(player1)
+all_sprites = pygame.sprite.Group(player)
 #List of all of the Enemies
 enemy_list = pygame.sprite.Group()
 #List of all of the laser shots
@@ -172,12 +223,6 @@ for i in range(10):
 
 score = 0
 
-def healthbar(playerhealth):
-	if playerhealth > 35:
-		playerhealth_color = GREEN
-	else:
-		playerhealth_color = RED
-	pygame.draw.rect(screen, playerhealth_color, (680, 25, playerhealth, 25))
 
 
 # - - - - - - - Main Program - - - - - - - #
@@ -195,18 +240,18 @@ while running:
 		if event.type == pygame.KEYDOWN:
 			### Player Movement
 			if event.key == pygame.K_UP:
-				player1.moveup()
+				player.moveup()
 			if event.key == pygame.K_DOWN:
-				player1.movedown()
+				player.movedown()
 			if event.key == pygame.K_LEFT:
-				player1.moveleft()
+				player.moveleft()
 			if event.key == pygame.K_RIGHT:
-				player1.moveright()
+				player.moveright()
 			### Player Shoots
 			if event.key == pygame.K_SPACE:
 				laser = Laser()
-				laser.rect.x = player1.rect.x
-				laser.rect.y = player1.rect.y + 25
+				laser.rect.x = player.rect.x
+				laser.rect.y = player.rect.y + 35
 				#Add the laser to the lists
 				all_sprites.add(laser)
 				laserSound.play()
@@ -215,11 +260,11 @@ while running:
 
 		elif event.type == pygame.KEYUP:
 			if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
-				player1.movepos[1] = 0
-				player1.state = 'still'
+				player.movepos[1] = 0
+				player.state = 'still'
 			if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
-				player1.movepos[0] = 0
-				player1.state = 'still'
+				player.movepos[0] = 0
+				player.state = 'still'
 
 	for laser in laser_list:
 		#check to see if it's hit an enemy
@@ -230,25 +275,25 @@ while running:
 			laser_list.remove(laser)
 			all_sprites.remove(laser)
 			score += 1
-			print(score)
+			explosionSound.play()
+			expl = Explosion(enemy.rect.center, 'large')
+			all_sprites.add(expl)
 
 			newEnemy = Enemy()
 			levelupEnemy = Enemy()
 			all_sprites.add(newEnemy)
 			enemy_list.add(newEnemy)
-			if score % 5 == 0:
+			if score % 7 == 0:
 				all_sprites.add(levelupEnemy)
 				enemy_list.add(levelupEnemy)
 
 		#Remove laser is if flies off the screen
-		if laser.rect.y < -10:
+		if laser.rect.x > screenWidth + 40:
 			laser_list.remove(laser)
 			all_sprites.remove(laser)
 			all_sprites.update()
 
-
-	healthbar(playerhealth)
-
+	
 	#Have the background repeat itself 
 	screen.fill(BLACK)
 	screen.blit(backDrop1, (backDrop1_x,0))
@@ -271,11 +316,21 @@ while running:
 	backGround2_x -= 10
 
 	all_sprites.update()
-	playerDeath = pygame.sprite.spritecollide(player1, enemy_list, True, pygame.sprite.collide_circle)
-	if playerDeath:
-		running = False
+	playerHits = pygame.sprite.spritecollide(player, enemy_list, True, pygame.sprite.collide_circle)
+	for hit in playerHits:
+		player.health -= 25
+		explosionSound.play()
+		expl = Explosion(hit.rect.center, 'large')
+		all_sprites.add(expl)
+		newEnemy = Enemy()
+		all_sprites.add(newEnemy)
+		enemy_list.add(newEnemy)
+
+		if player.health <= 0:
+			running = False
 
 	draw_text(screen, str(score), 24, 10, 20)
+	draw_health_bar(screen, 40, 20, player.health)
 
 	all_sprites.draw(screen)
 
